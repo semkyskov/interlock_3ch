@@ -1,0 +1,43 @@
+blueprint:
+  name: Interlock
+  description: Turns off one entity when the other one is turned on
+  domain: automation
+  input:
+    entity_1:
+      name: First entity
+      selector:
+        entity: {}
+    entity_2:
+      name: Second entity
+      selector:
+        entity: {}
+    entity_3:
+      name: Third entity
+      selector:
+        entity: {}
+  source_url: https://community.home-assistant.io/t/interlock-2-entities-single-run-mode/410062
+mode: single
+max_exceeded: silent
+variables:
+  entity_1: !input 'entity_1'
+  entity_2: !input 'entity_2'
+  entity_3: !input 'entity_3'
+trigger:
+- platform: state
+  entity_id: !input 'entity_1'
+- platform: state
+  entity_id: !input 'entity_2'
+- platform: state
+  entity_id: !input 'entity_3'
+condition: '{{ trigger.to_state.state == "on" }}'
+action:
+- service: homeassistant.turn_off
+  target:
+    entity_id: >-
+      {% if trigger.from_state.entity_id == entity_1 %}
+      {{ entity_2, entity_3 }}
+      {% elif trigger.from_state.entity_id == entity_2 %}
+      {{ entity_3, entity_1 }}
+      {% else %}
+      {{ entity_1, entity_2 }}
+      {% endif %}
